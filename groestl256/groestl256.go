@@ -26,7 +26,11 @@ func New() hash.Hash {
 }
 
 func (h *impl) stateBytes() (out []byte) {
-	panic("Not implemented.")
+	out = make([]byte, Size)
+	for i := range h.state {
+		binary.BigEndian.PutUint64(out[i*8:], h.state[i])
+	}
+	return
 }
 
 func (h *impl) Write(data []byte) (int, error) {
