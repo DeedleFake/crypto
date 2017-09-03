@@ -17,14 +17,10 @@ type context struct {
 	count  uint64
 }
 
-func (ctx *context) init(size uint64) {
-	// Most of these are set to zero values, but they'll need to be
-	// reinitialized later, so...
-
-	ctx.offset = 0
-	ctx.state = [8]uint64{}
+func newContext(size uint64) *context {
+	ctx := &context{}
 	ctx.state[7] = size
-	ctx.count = 0
+	return ctx
 }
 
 func (ctx *context) core(data []byte) {
@@ -102,18 +98,15 @@ func (ctx *context) close(dst []byte, ub, n uint64) {
 
 	copy(dst, pad[32-len(dst):])
 
-	ctx.init(uint64(len(dst)) << 3)
+	//ctx.init(uint64(len(dst)) << 3)
 }
 
 type impl struct {
-	ctx  context
 	data []byte
 }
 
 func New() hash.Hash {
-	h := &impl{}
-	h.Reset()
-	return h
+	return &impl{}
 }
 
 func (h *impl) Write(data []byte) (int, error) {
@@ -123,13 +116,15 @@ func (h *impl) Write(data []byte) (int, error) {
 
 func (h *impl) Sum(prev []byte) []byte {
 	out := append(prev, make([]byte, Size)...)
-	h.ctx.core(h.data)
-	h.ctx.close(out[len(prev):], 0, 0)
+
+	ctx := newContext(Size)
+	ctx.core(h.data)
+	ctx.close(out[len(prev):], 0, 0)
+
 	return out
 }
 
 func (h *impl) Reset() {
-	h.ctx.init(Size)
 	h.data = h.data[:0]
 }
 
