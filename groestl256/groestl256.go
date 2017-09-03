@@ -14,7 +14,6 @@ type impl struct {
 	buf    [64]byte
 	offset int
 	state  [8]uint64
-	count  uint64
 
 	data []byte
 }
@@ -38,13 +37,12 @@ func (h *impl) Write(data []byte) (int, error) {
 	return len(data), nil
 }
 
+func (h *impl) pad(clen int) {
+	panic("Not implemented.")
+}
+
 func (h *impl) Sum(prev []byte) []byte {
 	data := h.data
-
-	if len(data) < len(h.buf)-h.offset {
-		// TODO: Handle len(data) not being a multiple of 64.
-		panic("Not implemented.")
-	}
 
 	for len(data) > 0 {
 		clen := len(h.buf) - h.offset
@@ -53,6 +51,10 @@ func (h *impl) Sum(prev []byte) []byte {
 		}
 
 		copy(h.buf[h.offset:], data[:clen])
+		if len(data) < BlockSize {
+			h.pad(clen)
+		}
+
 		h.offset += clen
 		data = data[clen:]
 
@@ -77,7 +79,6 @@ func (h *impl) Sum(prev []byte) []byte {
 				h.state[u] ^= g[u] ^ m[u]
 			}
 
-			h.count++
 			h.offset = 0
 		}
 	}
