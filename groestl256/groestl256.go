@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	Size      = 32
+	Size      = 64
 	BlockSize = 64
 )
 
@@ -58,7 +58,7 @@ func (h *impl) Sum(prev []byte) []byte {
 
 		if h.offset == len(h.buf) {
 			var g, m [8]uint64
-			for u := 0; u < 8; u++ {
+			for u := range h.state {
 				m[u] = binary.BigEndian.Uint64(h.buf[u<<3:])
 				g[u] = m[u] ^ h.state[u]
 			}
@@ -73,7 +73,7 @@ func (h *impl) Sum(prev []byte) []byte {
 				roundSmallQ(m[:], uint64(r+1))
 			}
 
-			for u := 0; u < 8; u++ {
+			for u := range h.state {
 				h.state[u] ^= g[u] ^ m[u]
 			}
 
