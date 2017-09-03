@@ -42,8 +42,8 @@ func (h *impl) Sum(prev []byte) []byte {
 	data := h.data
 
 	if len(data) < len(h.buf)-h.offset {
-		copy(h.buf[h.offset:], data)
-		h.offset += len(data)
+		// TODO: Handle len(data) not being a multiple of 64.
+		panic("Not implemented.")
 	}
 
 	for len(data) > 0 {
