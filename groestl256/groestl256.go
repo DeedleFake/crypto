@@ -74,7 +74,7 @@ func (ctx *context) close(dst []byte, ub, n uint64) {
 	}
 	binary.BigEndian.PutUint64(pad[padLen-8:], count)
 
-	ctx.core(pad[:])
+	ctx.core(pad[:padLen])
 
 	x := ctx.state
 	permSmallP(x[:])
