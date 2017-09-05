@@ -6,7 +6,10 @@ import (
 )
 
 const (
-	Size      = 32
+	// Size is the size of a hash in bytes.
+	Size = 32
+
+	// BlockSize is the blocksize of a hash.
 	BlockSize = 64
 )
 
@@ -95,6 +98,7 @@ type impl struct {
 	data []byte
 }
 
+// New returns a new hash.Hash that computes Groestl-256 hashes.
 func New() hash.Hash {
 	return &impl{}
 }
@@ -126,6 +130,7 @@ func (h *impl) BlockSize() int {
 	return BlockSize
 }
 
+// Sum computes the Groestl-256 hash of data.
 func Sum(data []byte) (out [Size]byte) {
 	ctx := newContext(Size)
 	ctx.core(data)
