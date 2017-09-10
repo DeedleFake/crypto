@@ -20,17 +20,18 @@ type context struct {
 	count  uint64
 }
 
-func newContext(size uint64) *context {
+// New returns a new hash.Hash that computes Groestl-256 hashes.
+func New() hash.Hash {
 	ctx := &context{}
-	ctx.state[7] = size * 8
+	ctx.state[7] = Size * 8
 	return ctx
 }
 
-func (ctx *context) core(data []byte) {
+func (ctx *context) Write(data []byte) (n int, err error) {
 	if len(data) < len(ctx.buf)-ctx.offset {
 		copy(ctx.buf[ctx.offset:], data)
 		ctx.offset += len(data)
-		return
+		return len(data), nil
 	}
 
 	for len(data) > 0 {
@@ -61,6 +62,8 @@ func (ctx *context) core(data []byte) {
 			ctx.offset = 0
 		}
 	}
+
+	return len(data), nil
 }
 
 func (ctx *context) close(dst []byte, ub, n uint64) {
@@ -77,7 +80,7 @@ func (ctx *context) close(dst []byte, ub, n uint64) {
 	}
 	binary.BigEndian.PutUint64(pad[padLen-8:], count)
 
-	ctx.core(pad[:padLen])
+	ctx.Write(pad[:padLen])
 
 	x := ctx.state
 	permSmallP(x[:])
@@ -91,49 +94,33 @@ func (ctx *context) close(dst []byte, ub, n uint64) {
 
 	copy(dst, pad[32-len(dst):])
 
+	*ctx = *New().(*context)
+
 	//ctx.init(uint64(len(dst)) << 3)
 }
 
-type impl struct {
-	data []byte
-}
-
-// New returns a new hash.Hash that computes Groestl-256 hashes.
-func New() hash.Hash {
-	return &impl{}
-}
-
-func (h *impl) Write(data []byte) (int, error) {
-	h.data = append(h.data, data...)
-	return len(data), nil
-}
-
-func (h *impl) Sum(prev []byte) []byte {
+func (ctx *context) Sum(prev []byte) []byte {
 	out := append(prev, make([]byte, Size)...)
-
-	ctx := newContext(Size)
-	ctx.core(h.data)
 	ctx.close(out[len(prev):], 0, 0)
-
 	return out
 }
 
-func (h *impl) Reset() {
-	h.data = h.data[:0]
+func (ctx *context) Reset() {
+	*ctx = *New().(*context)
 }
 
-func (h *impl) Size() int {
+func (ctx *context) Size() int {
 	return Size
 }
 
-func (h *impl) BlockSize() int {
+func (ctx *context) BlockSize() int {
 	return BlockSize
 }
 
 // Sum computes the Groestl-256 hash of data.
 func Sum(data []byte) (out [Size]byte) {
-	ctx := newContext(Size)
-	ctx.core(data)
-	ctx.close(out[:], 0, 0)
+	h := New()
+	h.Write(data)
+	h.Sum(out[:0])
 	return
 }
